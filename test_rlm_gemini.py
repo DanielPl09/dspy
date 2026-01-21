@@ -1,16 +1,21 @@
 """
-Minimal test script for dspy.RLM with Google Gemini API
-This script keeps API calls minimal by using:
-- Small test dataset instead of 16-month slack dump
-- Low max_iterations and max_llm_calls limits
+Test script for dspy.RLM with OpenAI API
+Demonstrates multi-hop reasoning with:
+- 2-week Slack dataset (realistic but manageable)
+- Configuration optimized to show iterative refinement via sub-LM calls
 """
 
+import os
 import dspy
 
-# Configure dspy to use Google Gemini with the provided API key
-# Note: Use "gemini/" prefix for Google Gemini models
-google_lm = dspy.LM("gemini/gemini-1.5-flash", api_key="AIzaSyAqfZRxJbxPfElPxVi79L9r0zBDCyEaZTc")
-dspy.configure(lm=google_lm)
+# Configure dspy to use OpenAI
+# Set your API key: export OPENAI_API_KEY="your-key-here"
+api_key = os.environ.get("OPENAI_API_KEY")
+if not api_key:
+    raise ValueError("Please set OPENAI_API_KEY environment variable")
+
+openai_lm = dspy.LM("openai/gpt-4o-mini", api_key=api_key)
+dspy.configure(lm=openai_lm)
 
 # 2-week Slack discussion with enough complexity to require multi-hop reasoning
 # The dataset is structured to encourage RLM to break it into chunks and use sub-LMs
@@ -75,7 +80,7 @@ rlm = dspy.RLM(
 )
 
 print("=" * 80)
-print("Testing dspy.RLM with Google Gemini")
+print("Testing dspy.RLM with OpenAI (GPT-4o-mini)")
 print("=" * 80)
 print()
 
@@ -83,8 +88,8 @@ print()
 # The RLM should break this down: first identify all ideas, then analyze which are unfinished,
 # then rank by "coolness" based on how often they're revisited and expanded upon
 output = rlm(
-    discussion=slack_dump,
-    request="What are the top 3 most promising ideas that Omar & Isaac discussed? For each idea, identify when it was first mentioned and how it evolved over the 2 weeks."
+    discussion=slack_dump,  # past 2 weeks (realistic test size)
+    request="What are the 5 coolest unfinished ideas that Omar & Isaac keep coming back to?"
 )
 
 print()
@@ -97,11 +102,11 @@ for i, idea in enumerate(output.ideas, 1):
     print(f"{i}. {idea}")
 
 print()
-print("First idea:", output.ideas[0])
+print(f"First idea: {output.ideas[0]}")
 
-# Optional: Print the trajectory to see how RLM reasoned through the problem
+# Print the trajectory to see how RLM reasoned through the problem with multi-hop
 print()
 print("=" * 80)
-print("EXECUTION TRAJECTORY (for debugging)")
+print("EXECUTION TRAJECTORY (Multi-hop reasoning trace)")
 print("=" * 80)
 print(output.trajectory)
