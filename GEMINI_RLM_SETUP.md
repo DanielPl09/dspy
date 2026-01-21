@@ -8,22 +8,28 @@ RLM (Recursive Language Model) is an advanced inference strategy in DSPy that tr
 
 - Lets the LLM write Python code to examine and process data programmatically
 - Uses a sandboxed REPL environment for safe code execution
-- Iteratively reasons through problems by:
+- **Enables multi-hop reasoning** through iterative sub-LM calls
+- **Delegates chunks to sub-LMs** for focused analysis and parallel processing
+- Iteratively refines understanding by:
   1. Analyzing the current state
   2. Writing Python code to explore or solve parts of the problem
-  3. Receiving output and continuing iteration
-  4. Calling `SUBMIT()` when complete
+  3. Calling sub-LMs (`llm_query()`, `llm_query_batched()`) for semantic analysis
+  4. Receiving output and continuing iteration
+  5. Calling `SUBMIT()` when complete
 
 This is particularly useful for:
-- Processing very long documents (like 16 months of Slack messages)
-- Complex reasoning tasks requiring multiple steps
-- Tasks that benefit from programmatic data exploration
+- **Multi-hop reasoning**: Break complex queries into iterative sub-tasks
+- **Processing very long documents**: Chunk and delegate to sub-LMs (e.g., 16 months of Slack messages)
+- **Complex reasoning tasks**: Combine programmatic logic with LM semantic understanding
+- **Iterative refinement**: Each sub-LM call builds on previous results
+- **Parallel processing**: Use `llm_query_batched()` for independent analyses
 
 ## Files Included
 
 1. **test_simple_gemini.py** - Simple test to verify API connection works
-2. **test_rlm_gemini.py** - Full RLM test with minimal dataset
-3. **GEMINI_RLM_SETUP.md** - This documentation
+2. **test_rlm_gemini.py** - Full RLM test with 2-week dataset optimized for multi-hop reasoning
+3. **RLM_MULTIHOP_ANALYSIS.md** - Detailed analysis of expected multi-hop behavior and chunking strategy
+4. **GEMINI_RLM_SETUP.md** - This documentation
 
 ## Prerequisites
 
@@ -56,6 +62,44 @@ The scripts use `gemini/gemini-1.5-flash` which is:
 Alternative models:
 - `gemini/gemini-1.5-pro` - More capable, higher cost
 - `gemini/gemini-2.5-flash` - Latest flash model
+
+## Multi-Hop Reasoning with RLM
+
+The test script (`test_rlm_gemini.py`) is designed to demonstrate **multi-hop reasoning** where the RLM:
+
+1. **Breaks down complex queries** into focused sub-tasks
+2. **Delegates chunks to sub-LMs** for parallel analysis
+3. **Iteratively refines** understanding based on sub-LM results
+4. **Combines code + LM reasoning** for optimal efficiency
+
+### Example Multi-Hop Flow
+
+For the query: "What are the top 3 most promising ideas and how did they evolve?"
+
+**Hop 1**: Extract all ideas
+```python
+ideas = llm_query("Extract all distinct ideas from this discussion")
+```
+
+**Hop 2**: Analyze each idea's timeline (parallel)
+```python
+timelines = llm_query_batched([
+    f"When was '{idea}' first mentioned and how did it evolve?"
+    for idea in ideas
+])
+```
+
+**Hop 3**: Rank by promising-ness
+```python
+ranking = llm_query("Rank these ideas by frequency, depth, and connections")
+```
+
+**Hop 4**: Format and submit
+```python
+SUBMIT(ideas=format_top_3(ranking))
+```
+
+See **RLM_MULTIHOP_ANALYSIS.md** for detailed expected behavior.
 
 ## Usage
 
@@ -98,42 +142,61 @@ Expected output format:
 Testing dspy.RLM with Google Gemini
 ================================================================================
 
-[RLM reasoning and code execution traces...]
+[RLM multi-hop reasoning traces showing:]
+- Iteration 1: Extract all ideas using llm_query()
+- Iteration 2: Analyze timelines using llm_query_batched()
+- Iteration 3: Rank ideas using llm_query()
+- Iteration 4: Format and SUBMIT()
 
 ================================================================================
 RESULTS
 ================================================================================
 
 Ideas found:
-1. Automatic prompt optimization using model feedback
-2. DSPy compiler with reinforcement learning
-3. Multi-hop reasoning with recursive LMs and caching
-4. Visual debugger for DSPy program traces
-5. Automatic dataset generation from unlabeled data
+1. Recursive Language Models (RLM) (First mentioned: Jan 9, 2024) - Started with
+   concept of programmatic context exploration, evolved through sandboxing discussions,
+   successful testing, and recognized as general approach by Jan 19.
 
-First idea: Automatic prompt optimization using model feedback
+2. Multi-hop reasoning with iterative refinement (First mentioned: Jan 11, 2024) -
+   Branching vs linear reasoning, successfully implemented with 5-8 iterations,
+   recognized as key RLM capability.
+
+3. Caching intermediate results (First mentioned: Jan 16, 2024) - Memoization for
+   redundant sub-LM calls, connected to multi-hop efficiency and cost optimization.
+
+First idea: Recursive Language Models (RLM) (First mentioned: Jan 9, 2024) - ...
+
+================================================================================
+EXECUTION TRAJECTORY (Multi-hop reasoning trace)
+================================================================================
+[Shows each iteration's reasoning, code, and sub-LM results]
 ```
 
 ## Cost Management
 
-The scripts are designed to minimize API costs:
+The scripts are designed to demonstrate multi-hop reasoning while keeping costs low:
 
 ### In test_rlm_gemini.py:
 
 ```python
-# Minimal dataset instead of 16 months of real data
+# 2-week Slack dataset (realistic but manageable)
 slack_dump = """
-[Small 8-message conversation]
+[~30 messages over 2 weeks covering RLM development]
 """
 
-# Reduced limits
+# Optimized for multi-hop reasoning
 rlm = dspy.RLM(
     "discussion, request -> ideas: list[str]",
-    max_iterations=5,      # Reduced from default 20
-    max_llm_calls=10,      # Reduced from default 50
-    verbose=True
+    max_iterations=10,     # Allow multi-hop reasoning (4-5 expected)
+    max_llm_calls=15,      # Allow sub-LM calls for chunking (8-10 expected)
+    verbose=True           # See multi-hop behavior
 )
 ```
+
+**Expected usage**:
+- Iterations: 4-5 (breaking down the task into hops)
+- Sub-LM calls: 8-10 (parallel analyses of chunks)
+- Total cost: ~$0.002 per run (less than a quarter cent)
 
 ### For Production Use:
 
@@ -272,12 +335,17 @@ For Gemini 1.5 Flash (prices as of 2024):
 - Input: ~$0.075 per 1M tokens
 - Output: ~$0.30 per 1M tokens
 
-**Test script estimate:**
-- Input: ~500 tokens/iteration × 5 iterations = 2,500 tokens
+**Test script estimate (2-week dataset, multi-hop):**
+- Main iterations: ~1,500 tokens/iteration × 5 iterations = 7,500 tokens
+- Sub-LM calls: ~500 tokens/call × 10 calls = 5,000 tokens
 - Output: ~200 tokens/iteration × 5 iterations = 1,000 tokens
-- **Total cost: < $0.001** (less than one tenth of a cent)
+- **Total: ~15,000 input tokens, ~2,500 output tokens**
+- **Cost: ~$0.002** (less than a quarter cent)
 
 **Production with 16-month Slack dump:**
-- Will depend on size of dump and number of iterations
-- Monitor first run with `verbose=True` to estimate costs
-- Consider chunking very large documents
+- RLM will chunk the data and delegate to sub-LMs
+- Expected: 20-30 iterations with 50-100 sub-LM calls
+- Estimated cost: $0.05-0.10 per run with Gemini Flash
+- Monitor first run with `verbose=True` to track actual costs
+- The multi-hop approach is actually **more cost-effective** than sending
+  the entire 16-month dump in a single prompt
