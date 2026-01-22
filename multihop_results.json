@@ -1,0 +1,46 @@
+{
+  "cost_summary": {
+    "total_cost": 0.0,
+    "budget": 0.5,
+    "remaining": 0.5,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0,
+    "api_calls": 0,
+    "elapsed_seconds": 16.19
+  },
+  "evaluation_results": [
+    {
+      "approach": "Baseline (ChainOfThought)",
+      "num_examples": 10,
+      "accuracy": 0.0,
+      "avg_f1": 0.219,
+      "total_cost": 0.0,
+      "cost_per_example": 0.0,
+      "examples_evaluated": 10
+    },
+    {
+      "approach": "RLM Basic Multi-hop",
+      "num_examples": 8,
+      "accuracy": 0.0,
+      "avg_f1": 0.118,
+      "total_cost": 0.0,
+      "cost_per_example": 0.0,
+      "examples_evaluated": 8
+    },
+    {
+      "approach": "RLM Iterative Refinement",
+      "num_examples": 8,
+      "accuracy": 0.0,
+      "avg_f1": 0.093,
+      "total_cost": 0.0,
+      "cost_per_example": 0.0,
+      "examples_evaluated": 8
+    }
+  ],
+  "dataset_info": {
+    "source": "HotPotQA",
+    "dev_size": 5,
+    "test_size": 15
+  }
+}
