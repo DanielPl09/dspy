@@ -1,0 +1,95 @@
+{
+  "description": "Real enterprise multi-source dataset for RLM testing",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Is Sarah Chen eligible for the extended warranty replacement on her laptop?",
+      "answer": "Yes, eligible. Purchased within 24-month extended warranty period and hardware failure is covered.",
+      "sources": {
+        "CLIENT_DB": {
+          "customer_record_sarah_chen": "Customer ID: C-2847. Name: Sarah Chen. Email: schen@email.com. Purchase History: Dell XPS 15 Laptop (Order #ORD-19283, Jan 15 2024, $1,899). Extended Warranty: Yes, 24-month plan purchased. Support Tickets: Ticket #T-5521 opened Mar 10 2026 - 'Laptop won't boot, black screen'. Status: Open.",
+          "ticket_details_T5521": "Ticket #T-5521. Customer: Sarah Chen (C-2847). Issue: Device won't power on, black screen on boot. Technician Notes: Hardware diagnostics show motherboard failure. Device age: 25 months. Customer requests replacement under warranty."
+        },
+        "CONTRACT": {
+          "extended_warranty_terms": "Extended Warranty Agreement - 24 Month Coverage. Covers: Hardware failures including motherboard, display, battery, keyboard. Excludes: Accidental damage, liquid damage, cosmetic wear. Eligibility: Valid for 24 months from original purchase date. Replacement: Authorized for covered hardware failures within warranty period.",
+          "warranty_replacement_policy": "Replacement Policy: Customer eligible for replacement if (1) hardware failure confirmed by technician, (2) within warranty period, (3) failure type is covered under plan terms. Process: Submit ticket → diagnostic → approval → replacement shipped within 5 business days."
+        },
+        "POLICY": {
+          "company_warranty_guidelines": "Company Warranty Guidelines v3.2. All warranty claims must be verified by authorized technician. Extended warranty customers receive priority processing. Motherboard failures qualify for immediate replacement approval. Standard replacement timeline: 5 business days from approval."
+        }
+      }
+    },
+    {
+      "id": 2,
+      "question": "What is the maximum PTO carryover allowed for employee Marcus Rodriguez?",
+      "answer": "10 days maximum. Marcus has Director level (5+ years tenure), union contract allows 50% carryover of 20 days = 10 days.",
+      "sources": {
+        "CLIENT_DB": {
+          "employee_record_marcus_rodriguez": "Employee ID: E-4521. Name: Marcus Rodriguez. Department: Engineering. Title: Senior Director. Hire Date: March 12, 2019 (6.8 years tenure). Employment Type: Full-time. Union Member: Yes, Tech Workers Union Local 204. Current PTO Balance: 18 days accrued, 3 days used in 2026.",
+          "pto_tracking_marcus": "PTO Tracking - Marcus Rodriguez (E-4521). 2026 Accrual: 20 days (Director level). Used: 3 days (Jan 20-22). Remaining: 17 days. Previous Year Carryover: 8 days from 2025. Total Available: 25 days."
+        },
+        "CONTRACT": {
+          "union_collective_agreement": "Tech Workers Union Local 204 - Collective Bargaining Agreement 2024-2027. Article 8: Paid Time Off. Section 8.4 Carryover: Union members may carry over up to 50% of annual PTO allocation to following year. Unused carryover expires Dec 31 of following year. Director-level and above: 20 days annual PTO.",
+          "pto_carryover_rules": "PTO Carryover Rules: Percentage allowed = 50% of annual allocation. Calculation: Annual allocation × 0.5 = max carryover days. Example: 20 days annual × 50% = 10 days max carryover. Carryover must be used by Dec 31 of following year or forfeited."
+        },
+        "POLICY": {
+          "company_pto_policy": "Company PTO Policy Rev 8. Annual Allocation by Level: Associate: 15 days, Senior: 18 days, Director: 20 days, VP+: 25 days. Carryover: Standard employees 25% (5 days max). Union employees: Per collective bargaining agreement terms. Accrual: Pro-rated based on hire date and tenure."
+        }
+      }
+    },
+    {
+      "id": 3,
+      "question": "Can we ship the bulk order to Canada with expedited delivery by March 1st?",
+      "answer": "No. Bulk orders to Canada require 10 business days minimum (Mar 7 earliest). Expedited only available for US domestic.",
+      "sources": {
+        "KNOWLEDGE": {
+          "shipping_methods_guide": "Shipping Methods Guide. Domestic US: Standard (5-7 days), Expedited (2-3 days), Overnight (1 day). International: Standard International (10-15 days), Express International (5-7 days). Bulk Orders (>50 units): Additional 3-5 days processing time added to all methods.",
+          "canada_shipping_faq": "Canada Shipping FAQ. Q: Can I get expedited shipping to Canada? A: Expedited/overnight shipping only available for US domestic addresses. Canada shipments use Standard International (10-15 days) or Express International (5-7 days). Q: What about bulk orders? A: Bulk orders (>50 units) require additional processing time."
+        },
+        "POLICY": {
+          "international_shipping_policy": "International Shipping Policy. Canada Classification: International destination (not domestic). Bulk Order Definition: Orders with 50+ units. Bulk Order Processing: Requires 3 business days warehouse processing before ship date. Available Methods: Standard Int'l or Express Int'l only. Expedited/Overnight: US domestic only.",
+          "delivery_timeline_requirements": "Delivery Timeline Requirements. Bulk Orders to Canada: Minimum 10 business days total (3 days processing + 7 days shipping). Calculation: Order date + 3 processing + 7 shipping minimum. Express option: 3 processing + 5 shipping = 8 business days minimum. Expedited NOT available internationally."
+        },
+        "MANUAL": {
+          "order_processing_procedures": "Order Processing Procedures v2.1. Step 1: Order received and validated. Step 2: Bulk orders (50+ units) enter warehouse queue - 3 business day SLA. Step 3: International orders require customs documentation (1 day). Step 4: Shipment dispatched. Timeline: Today Feb 18 + 3 processing + 7 Canada shipping = Feb 28 (9 days, earliest Mar 3 with weekends)."
+        }
+      }
+    },
+    {
+      "id": 4,
+      "question": "Does the data retention policy allow us to delete customer payment records from 2018?",
+      "answer": "No. Financial transaction records must be retained 7 years minimum (until 2025). Tax regulations require 7 years, policy mandates compliance.",
+      "sources": {
+        "POLICY": {
+          "data_retention_policy": "Data Retention Policy v5.0. Financial Records: Minimum 7 years retention required. Customer Payment Records: Includes transaction history, payment methods, receipts - 7 year retention. Calculation: Record year + 7 years. Example: 2018 records retained until Dec 31, 2025. Personal Data: May be deleted after retention period unless customer active.",
+          "records_deletion_guidelines": "Records Deletion Guidelines. Step 1: Verify retention period expired. Step 2: Check regulatory requirements (tax: 7 years, GDPR: varies). Step 3: Confirm no active customer relationship. Step 4: Legal approval required for financial record deletion. Safe Harbor: Retain 7 years minimum for all financial data."
+        },
+        "CONTRACT": {
+          "merchant_services_agreement": "Merchant Services Agreement - Payment Processor Terms. Section 12: Record Keeping. Merchant agrees to maintain complete transaction records for minimum 7 years from transaction date. Required for chargeback disputes, audits, tax compliance. Breach of retention requirements may result in financial liability.",
+          "tax_compliance_requirements": "Tax Compliance Requirements. IRS Publication 583: Business tax records must be retained minimum 7 years. Includes: Sales records, receipts, payment documentation. State Requirements: California requires 7 years (longest applicable). International: GDPR allows deletion but tax law supersedes for financial records."
+        },
+        "KNOWLEDGE": {
+          "regulatory_compliance_faq": "Regulatory Compliance FAQ. Q: How long must we keep payment records? A: Minimum 7 years per IRS and state tax regulations. Q: Can GDPR right to deletion override? A: No, tax law retention requirements supersede GDPR for financial records. Q: When can we delete 2018 records? A: After Dec 31, 2025 (7 years retention period complete)."
+        }
+      }
+    },
+    {
+      "id": 5,
+      "question": "Is Jamie Taylor approved for remote work relocation to Texas?",
+      "answer": "Yes, approved. Engineering roles allow permanent remote, Texas has no state restrictions, manager approval documented.",
+      "sources": {
+        "CLIENT_DB": {
+          "employee_record_jamie_taylor": "Employee ID: E-7821. Name: Jamie Taylor. Department: Engineering. Title: Software Engineer II. Hire Date: June 3, 2022. Current Location: California (HQ). Employment Type: Full-time. Performance: Meets Expectations. Manager: Alex Kim (E-2104).",
+          "remote_work_request_jamie": "Remote Work Request ID: RWR-883. Employee: Jamie Taylor (E-7821). Request Type: Permanent Relocation. Proposed Location: Austin, Texas. Reason: Family relocation. Submitted: Feb 1, 2026. Manager Approval: Alex Kim approved Feb 5, 2026. Status: Pending HR/Legal review."
+        },
+        "POLICY": {
+          "remote_work_policy": "Remote Work Policy 2026. Eligible Roles: Engineering, Product, Design, Marketing - approved for permanent remote work. Ineligible: Operations, facilities-dependent roles. Geographic Restrictions: Must be US state with no tax/legal complications. Approval Required: Manager approval + HR review. Equipment: Company provides home office setup.",
+          "state_employment_guidelines": "State Employment Guidelines. Approved States: All 50 US states authorized for remote work. State-Specific Notes: Texas - no state income tax, no additional employer obligations. California - nexus remains with HQ. New York - requires additional tax withholding. Restrictions: None for TX. International: Requires legal review."
+        },
+        "MANUAL": {
+          "remote_relocation_process": "Remote Relocation Process Checklist. Step 1: Employee submits request (RWR form). Step 2: Manager approval required. Step 3: HR reviews role eligibility and state restrictions. Step 4: Legal confirms no compliance issues. Step 5: IT coordinates equipment shipment. Step 6: Payroll updates tax withholding. Timeline: 2-3 weeks total processing."
+        }
+      }
+    }
+  ]
+}

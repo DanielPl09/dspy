@@ -1,129 +1,19 @@
 """
 RLM with Source-Category-Based Chunking for Enterprise Use Cases
 
-Enterprise Scenario:
-- Documents organized by SOURCE CATEGORY (policies, manuals, client DB, etc.)
-- RLM queries specific categories to find cross-referenced information
-- Simulates real-world: legal case requiring policy + client history + contract terms
+Uses REAL enterprise dataset with actual multi-source documents:
+- CLIENT_DB: Customer/employee records
+- CONTRACT: Legal agreements, warranties
+- POLICY: Company policies, guidelines
+- KNOWLEDGE: FAQs, reference material
+- MANUAL: Procedures, process guides
 
-This tests progressive refinement across heterogeneous source categories.
+Tests progressive refinement across actual enterprise source categories.
 """
 
 import dspy
-from datasets import load_dataset
 from typing import Dict, List
 import json
-
-
-class SourceCategoryChunker:
-    """
-    Chunks documents by source category for enterprise scenarios.
-
-    Categories:
-    - POLICY: Company policies, legal documents
-    - MANUAL: Technical manuals, product docs
-    - CLIENT_DB: Customer records, support tickets
-    - CONTRACT: Agreements, terms of service
-    - KNOWLEDGE: FAQ, wiki articles
-    """
-
-    def __init__(self, chunk_size: int = 150):
-        self.chunk_size = chunk_size
-
-    def categorize_source(self, title: str, content: str) -> str:
-        """
-        Determine source category from document metadata.
-
-        For HotPotQA simulation:
-        - Person bios → CLIENT_DB (customer/entity records)
-        - Film/TV/Book info → KNOWLEDGE (reference material)
-        - Location/Organization → POLICY (entity policies/info)
-        - Legal/Government → CONTRACT (agreements/terms)
-        """
-        title_lower = title.lower()
-        content_lower = content.lower()
-
-        # Simulate category assignment
-        if any(word in title_lower for word in ['film', 'album', 'song', 'book', 'series']):
-            return 'KNOWLEDGE'
-        elif any(word in content_lower[:200] for word in ['born', 'nationality', 'actor', 'director', 'writer']):
-            return 'CLIENT_DB'  # Person records
-        elif any(word in title_lower for word in ['company', 'organization', 'government']):
-            return 'POLICY'
-        elif any(word in content_lower[:200] for word in ['agreement', 'contract', 'terms']):
-            return 'CONTRACT'
-        else:
-            return 'MANUAL'  # Default reference
-
-    def chunk_by_source_category(
-        self,
-        titles: List[str],
-        contents: List[str]
-    ) -> Dict[str, Dict[str, str]]:
-        """
-        Create category-aware chunks.
-
-        Returns:
-            {
-                'POLICY': {
-                    'policy_CompanyX_chunk_1': 'content...',
-                    'policy_CompanyX_chunk_2': 'content...'
-                },
-                'CLIENT_DB': {
-                    'client_JohnDoe_chunk_1': 'content...',
-                    'client_JohnDoe_chunk_2': 'content...'
-                },
-                ...
-            }
-        """
-        categorized_chunks = {
-            'POLICY': {},
-            'MANUAL': {},
-            'CLIENT_DB': {},
-            'CONTRACT': {},
-            'KNOWLEDGE': {}
-        }
-
-        for title, content in zip(titles, contents):
-            # Determine category
-            category = self.categorize_source(title, content)
-
-            # Chunk the document
-            words = content.split()
-
-            for i in range(0, len(words), self.chunk_size):
-                chunk_words = words[i:i + self.chunk_size]
-                chunk_num = i // self.chunk_size + 1
-
-                # Create category-prefixed chunk ID
-                chunk_id = f"{category.lower()}_{title}_chunk_{chunk_num}"
-                chunk_content = ' '.join(chunk_words)
-
-                categorized_chunks[category][chunk_id] = chunk_content
-
-        return categorized_chunks
-
-    def flatten_for_rlm(self, categorized_chunks: Dict[str, Dict[str, str]]) -> Dict[str, str]:
-        """Flatten category structure for RLM input."""
-        flat_chunks = {}
-        for category, chunks in categorized_chunks.items():
-            flat_chunks.update(chunks)
-        return flat_chunks
-
-    def get_category_summary(self, categorized_chunks: Dict[str, Dict[str, str]]) -> str:
-        """Create summary of available sources for RLM context."""
-        summary = "AVAILABLE SOURCE CATEGORIES:\n"
-        for category, chunks in categorized_chunks.items():
-            if chunks:
-                summary += f"\n{category}:\n"
-                summary += f"  - {len(chunks)} chunks available\n"
-                # Show sample chunk IDs
-                sample_ids = list(chunks.keys())[:3]
-                for chunk_id in sample_ids:
-                    summary += f"    • {chunk_id}\n"
-                if len(chunks) > 3:
-                    summary += f"    • ... and {len(chunks) - 3} more\n"
-        return summary
 
 
 class EnterpriseMultiHopSignature(dspy.Signature):
@@ -150,12 +40,12 @@ class EnterpriseMultiHopSignature(dspy.Signature):
 
 def test_source_category_chunking():
     """
-    Test RLM with source-category-based chunking on HotPotQA.
+    Test RLM with source-category-based chunking on REAL enterprise dataset.
 
-    Simulates enterprise scenario:
-    - Documents from different categories
-    - RLM must identify relevant categories
-    - Query across categories to find answer
+    Real enterprise questions requiring:
+    - Cross-referencing multiple source categories
+    - CLIENT_DB + CONTRACT + POLICY coordination
+    - Multi-source fact discovery
     """
 
     print("="*100)
@@ -163,30 +53,28 @@ def test_source_category_chunking():
     print("Enterprise Use Case: Cross-Reference Across Document Categories")
     print("="*100)
 
-    # Load dataset
-    print("\n📥 Loading HotPotQA dataset...")
-    dataset = load_dataset("hotpot_qa", "fullwiki", split="train")
-    multihop = [ex for ex in dataset if ex["level"] == "hard"][:5]
+    # Load REAL enterprise dataset
+    print("\n📥 Loading enterprise dataset...")
+    with open('enterprise_dataset.json', 'r') as f:
+        dataset = json.load(f)
 
-    print(f"✅ Loaded {len(multihop)} multi-hop questions\n")
+    questions = dataset['questions']
+    print(f"✅ Loaded {len(questions)} enterprise questions\n")
 
     # Setup LLM
     lm = dspy.LM(model='openai/gpt-4o-mini', temperature=0.0)
     dspy.configure(lm=lm, experimental=True)
 
-    # Create chunker
-    chunker = SourceCategoryChunker(chunk_size=150)
-
     # Configure RLM
     config = {
-        'max_iterations': 12,
-        'max_llm_calls': 30,
-        'num_questions': len(multihop)
+        'max_iterations': 8,
+        'max_llm_calls': 20,
+        'num_questions': len(questions)
     }
 
     print(f"⚙️  Configuration:")
-    print(f"   Chunking strategy: SOURCE CATEGORY (POLICY, CLIENT_DB, KNOWLEDGE, etc.)")
-    print(f"   Chunk size: ~150 words per chunk")
+    print(f"   Dataset: Real enterprise multi-source questions")
+    print(f"   Chunking: By SOURCE CATEGORY (POLICY, CLIENT_DB, CONTRACT, etc.)")
     print(f"   Max iterations: {config['max_iterations']}")
     print(f"   Max LLM calls: {config['max_llm_calls']}")
     print(f"   Test questions: {config['num_questions']}")
@@ -196,49 +84,47 @@ def test_source_category_chunking():
 
     results = []
 
-    for idx, example in enumerate(multihop, 1):
-        question = example['question']
-        gold_answer = example['answer']
-        titles = example['supporting_facts']['title']
-        sentences = example['supporting_facts']['sent']
-
-        # Reconstruct full documents
-        title_to_content = {}
-        for title, sent in zip(titles, sentences):
-            if title not in title_to_content:
-                title_to_content[title] = []
-            title_to_content[title].append(sent)
-
-        doc_titles = list(title_to_content.keys())
-        doc_contents = [' '.join(title_to_content[t]) for t in doc_titles]
+    for idx, qa_item in enumerate(questions, 1):
+        question = qa_item['question']
+        gold_answer = qa_item['answer']
+        sources = qa_item['sources']
 
         print(f"\n{'='*100}")
-        print(f"QUESTION {idx}/{len(multihop)}")
+        print(f"QUESTION {idx}/{len(questions)}")
         print(f"{'='*100}")
         print(f"\n❓ Question: {question}")
         print(f"🎯 Gold Answer: {gold_answer}")
 
-        # Create category-based chunks
-        categorized_chunks = chunker.chunk_by_source_category(doc_titles, doc_contents)
-        flat_chunks = chunker.flatten_for_rlm(categorized_chunks)
-        category_summary = chunker.get_category_summary(categorized_chunks)
+        # Prepare documents from source categories (already categorized!)
+        all_docs = {}
+        category_summary_parts = []
 
         print(f"\n📂 Source Categories:")
-        for category, chunks in categorized_chunks.items():
-            if chunks:
-                print(f"   {category}: {len(chunks)} chunks")
+        for category, docs in sources.items():
+            doc_count = len(docs)
+            print(f"   {category}: {doc_count} documents")
+            category_summary_parts.append(f"{category}: {doc_count} documents")
 
-        print(f"\n   Total chunks: {len(flat_chunks)}")
+            # Add documents with category prefix
+            for doc_id, content in docs.items():
+                prefixed_id = f"{category.lower()}_{doc_id}"
+                all_docs[prefixed_id] = content
+
+        category_summary = "AVAILABLE SOURCE CATEGORIES:\n" + "\n".join(
+            f"- {part}" for part in category_summary_parts
+        )
+
+        print(f"\n   Total documents: {len(all_docs)}")
         print(f"\n📋 Category Summary:")
         print(category_summary)
 
         # Run RLM
-        print(f"\n🔄 Running RLM with category-aware chunking...")
+        print(f"\n🔄 Running RLM with source-category documents...")
 
         try:
             pred = rlm(
                 source_categories=category_summary,
-                documents=flat_chunks,
+                documents=all_docs,
                 question=question
             )
 
@@ -247,15 +133,18 @@ def test_source_category_chunking():
 
             # Analyze category usage
             categories_queried = set()
+            categories_available = list(sources.keys())
+
             for step in trajectory:
                 code = step.get('code', '')
-                for category in ['policy', 'client_db', 'knowledge', 'manual', 'contract']:
-                    if category in code.lower():
-                        categories_queried.add(category.upper())
+                for category in categories_available:
+                    if category.lower() in code.lower():
+                        categories_queried.add(category)
 
             print(f"\n✅ RLM Completed")
             print(f"   Predicted: {predicted_answer}")
             print(f"   Gold: {gold_answer}")
+            print(f"   Categories available: {', '.join(categories_available)}")
             print(f"   Categories queried: {', '.join(sorted(categories_queried)) if categories_queried else 'None detected'}")
             print(f"   Iterations used: {len(trajectory)}/{config['max_iterations']}")
 
@@ -267,15 +156,12 @@ def test_source_category_chunking():
             print(f"   Total queries: {total_queries}")
 
             results.append({
+                'question_id': qa_item['id'],
                 'question': question,
                 'gold_answer': gold_answer,
                 'predicted': predicted_answer,
                 'trajectory': trajectory,
-                'categories_available': {
-                    cat: len(chunks)
-                    for cat, chunks in categorized_chunks.items()
-                    if chunks
-                },
+                'categories_available': categories_available,
                 'categories_queried': list(categories_queried),
                 'total_queries': total_queries,
                 'iterations': len(trajectory)
